@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IdiomMaster AI - ESL Tutor powered by Gemini</title>
+    <meta name="description" content="Master American English idioms with IdiomMaster AI, an interactive, speech-powered ESL tutor.">
+    <!-- Load Inter font - standard for modern design -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- Schema.org SoftwareApplication for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "IdiomMaster AI",
+      "description": "An interactive tutor for mastering American English idioms using speech recognition and AI feedback.",
+      "applicationCategory": "EducationApplication",
+      "operatingSystem": "Web Browser",
+      "inLanguage": "en-US"
+    }
+    </script>
+
+    <style>
+        /* BASE STYLES & FONT */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* DARK MODE STYLES */
+        body.dark-mode {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+        body.dark-mode header, body.dark-mode .card, body.dark-mode .modal-content {
+            background-color: #374151;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            border: 1px solid #4b5563;
+        }
+        body.dark-mode .mic-button {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #e5e7eb;
+        }
+        body.dark-mode .mic-button.listening {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        body.dark-mode .transcript-box {
+            background-color: #111827;
+            border-color: #4b5563;
+        }
+        body.dark-mode .setting-button {
+            background-color: #4b5563;
+            color: #d1d5db;
+        }
+        body.dark-mode .lesson-box {
+            background-color: #4b5563;
+        }
+
+        /* LAYOUT AND HEADER */
+        header {
+            background-color: #ffffff;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0d9488;
+            margin: 0;
+        }
+        main {
+            flex-grow: 1;
+            padding: 1.5rem;
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        footer {
+            text-align: center;
+            padding: 1rem 1.5rem;
+            color: #94a3b8;
+            font-size: 0.8rem;
+        }
+
+        /* CARD STYLES */
+        .card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* LESSON BOX */
+        .lesson-box {
+            background-color: #f1f5f9;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 5px solid #0d9488;
+        }
+
+        /* CANVAS */
+        #idiom-canvas {
+            border-radius: 8px;
+            background-color: #e2e8f0;
+            width: 100%;
+            display: block;
+        }
+        body.dark-mode #idiom-canvas {
+            background-color: #4b5563;
+            border: 1px solid #6b7280;
+        }
+
+        /* MIC BUTTON AND CONTROLS */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .mic-button {
+            width: 100%;
+            max-width: 300px;
+            height: 80px;
+            border: none;
+            border-radius: 40px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            color: white;
+            background: linear-gradient(135deg, #0d9488, #0f766e);
+            box-shadow: 0 4px 15px rgba(13, 148, 136, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mic-button:hover:not(.listening) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(13, 148, 136, 0.6);
+        }
+        .mic-button.listening {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+            animation: pulse-red 1.5s infinite;
+        }
+        .mic-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .mic-button i {
+            margin-right: 0.5rem;
+        }
+
+        /* BUTTON PULSE ANIMATION */
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+            max-width: 400px;
+            justify-content: center;
+        }
+        .setting-button {
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            background-color: #f9fafb;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            color: #374151;
+            font-weight: 600;
+        }
+        .setting-button:hover {
+            background-color: #e5e7eb;
+        }
+
+        /* TRANSCRIPT BOX */
+        .transcript-box {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            min-height: 2.5rem;
+            font-size: 0.9rem;
+            color: #374151;
+            margin-top: 1rem;
+            display: none; /* Hidden by default */
+        }
+        .transcript-box.visible {
+            display: block;
+        }
+
+        /* MODAL STYLES */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+        .modal-content {
+            background-color: #ffffff;
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+        .modal-content h2 {
+            margin-top: 0;
+            color: #0d9488;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover, .close-button:focus {
+            color: #000;
+        }
+        .modal label {
+            display: block;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        .modal input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .modal button.save-button {
+            margin-top: 2rem;
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #0d9488;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .modal button.save-button:hover {
+            background-color: #0f766e;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #0d9488; }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        /* UPLOAD STYLES */
+        .file-upload-container {
+            border: 2px dashed #d1d5db;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: border-color 0.2s;
+        }
+        .file-upload-container:hover {
+            border-color: #0d9488;
+        }
+        .file-upload-container p {
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+        #csv-import-message {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: #0d9488;
+        }
+    </style>
+</head>
+<body>
+
+    <header role="banner">
+        <h1><i class="fas fa-rocket"></i> IdiomMaster AI</h1>
+        <button id="settings-btn" class="setting-button" aria-controls="settings-modal" aria-label="Open Settings"><i class="fas fa-cog"></i> Settings</button>
+    </header>
+
+    <main role="main">
+        <article class="card">
+            <h2>Current Lesson:</h2>
+            <div class="lesson-info">
+                <div class="lesson-box">
+                    <p><strong>Idiom:</strong> <span id="current-idiom-phrase">Loading...</span></p>
+                    <p><strong>Meaning:</strong> <span id="current-idiom-meaning">...</span></p>
+                    <p><strong>Example:</strong> <span id="current-idiom-example">...</span></p>
+                </div>
+
+                <div id="status-message" class="text-center font-semibold text-lg py-2" style="color:#0d9488;">
+                    Tap the mic and say the idiom in a full sentence.
+                </div>
+
+                <div class="controls">
+                    <button id="mic-button" class="mic-button" disabled aria-label="Tap to start speaking">
+                        <i class="fas fa-microphone"></i> Tap to Speak
+                    </button>
+                    <div class="action-buttons">
+                        <button id="next-idiom-btn" class="setting-button" disabled><i class="fas fa-forward"></i> Next Idiom</button>
+                        <button id="sample-attempt-btn" class="setting-button"><i class="fas fa-vial"></i> Sample Attempt</button>
+                    </div>
+                </div>
+
+                <div id="transcript-box" class="transcript-box" role="status" aria-live="polite">
+                    Transcript will appear here...
+                </div>
+
+                <div class="toggle-switch mt-4" style="justify-content: flex-start; gap: 2rem;">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="captions-toggle">
+                        <span class="font-medium">Show Captions</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="tts-toggle" checked>
+                        <span class="font-medium">Tutor Speaks</span>
+                    </label>
+                </div>
+            </div>
+        </article>
+
+        <section class="card">
+            <h2>AI Tutor Feedback & Visuals</h2>
+            <canvas id="idiom-canvas" width="800" height="450" role="img" aria-label="Visual feedback from AI tutor, including conversation, lesson progress, and phoneme analysis."></canvas>
+            <p class="text-xs text-gray-500 mt-2">The canvas displays the conversation history, lesson progress, and linguistic feedback from your AI tutor.</p>
+        </section>
+
+    </main>
+
+    <footer role="contentinfo">
+        IdiomMaster AI | Built with vanilla JS and the Gemini API (gemini-2.5-flash)
+    </footer>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('settings-modal')" aria-label="Close Settings">&times;</span>
+            <h2 id="modal-title">Application Settings</h2>
+
+            <p id="api-key-status" style="color:red; font-weight: 600;"></p>
+
+            <label for="api-key-input">Gemini API Key</label>
+            <input type="text" id="api-key-input" placeholder="Paste your API Key here">
+            <p class="text-xs text-gray-500 mt-1">Key is saved securely in your browser's local storage.</p>
+
+            <div class="toggle-switch">
+                <span class="font-medium">Dark Mode</span>
+                <label class="switch">
+                    <input type="checkbox" id="dark-mode-toggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="toggle-switch">
+                <span class="font-medium">STT Accent Target (Placeholder)</span>
+                <select id="accent-target-select" class="setting-button">
+                    <option value="en-US">English (US)</option>
+                    <option value="en-GB">English (UK)</option>
+                    <option value="es-ES">Spanish (Spain)</option>
+                    <option value="auto">Auto-detect (System Default)</option>
+                </select>
+            </div>
+
+            <label>Import Custom Idioms (CSV)</label>
+            <div id="csv-upload-area" class="file-upload-container">
+                <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+                <p><i class="fas fa-upload"></i> Click to upload a CSV file</p>
+                <p id="csv-import-message">No file selected. Idiom list has 15 entries.</p>
+            </div>
+
+            <button class="save-button" onclick="saveSettings()">Save Settings</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA MODEL (CRITICAL REQUIREMENT: Sourced from 'Idiomania') ---
+        const IDIOMS_INITIAL = [
+            { phrase: "Think outside the box", meaning: "Think creatively and come up with new ideas", example: "Time to get creative and think outside the box.", register: 'General', confusables: ["Beyond the box", "Outside the crate"] },
+            { phrase: "Make a mountain out of a molehill", meaning: "Exaggerate a small problem and make it seem unnecessarily complicated", example: "Let's not make a mountain out of a molehill.", register: 'Informal', confusables: ["Make a hill out of a mountain", "Mountain of a tiny thing"] },
+            { phrase: "Devil's advocate", meaning: "Argue an alternative point of view for the sake of discussion", example: "Just to play devil's advocate for a moment, ordering an Uber might be expensive.", register: 'General', confusables: ["Devil's choice", "Angel's opposition"] },
+            { phrase: "A penny saved is a penny earned", meaning: "Every amount saved matters, regardless of how small", example: "They always taught me that a penny saved is a penny earned.", register: 'Proverbial', confusables: ["A cent saved is a cent earned", "A dollar made is a dollar spent"] },
+            { phrase: "Go down a rabbit hole", meaning: "Be distracted by something that takes up a lot of time", example: "Before I waste time going down a rabbit hole, I better just call for a ride.", register: 'Informal', confusables: ["Go down a rat hole", "Falling into a hole"] },
+            { phrase: "The sky is the limit", meaning: "Unlimited opportunities or potential", example: "I can take you anywhere, the sky is the limit!", register: 'Optimistic', confusables: ["The roof is the limit", "The stars are the limit"] },
+            { phrase: "Enjoy the fruits of your labor", meaning: "Enjoy the benefits of your hard work", example: "Remember to have fun and enjoy the fruits of your labor!", register: 'Formal/Positive', confusables: ["Taste the fruit of work", "Eat the benefit"] },
+            { phrase: "Go with the flow", meaning: "Relax and accept a situation instead of fighting against it", example: "You'll feel less stressed if you learn how to go with the flow.", register: 'Informal', confusables: ["Go with the river", "Following the water"] },
+            { phrase: "Break the ice", meaning: "Start a conversation when people meet for the first time", example: "Cho decided to break the ice and ask Eesha about herself.", register: 'Social', confusables: ["Smash the ice", "Melt the cold"] },
+            { phrase: "Head in the clouds", meaning: "Distracted by your thoughts, not paying attention to reality", example: "Honestly I think you have your head in the clouds, Cho!", register: 'Informal/Critical', confusables: ["Head in the air", "Feet in the sky"] },
+            { phrase: "Once in a blue moon", meaning: "A very rare moment or occurrence", example: "Eesha only felt this calm and relaxed once in a blue moon.", register: 'Informal', confusables: ["Once in a purple moon", "Once a century"] },
+            { phrase: "Come hell or highwater", meaning: "Persevering through great tribulation, regardless of the difficulty", example: "She would not listen to any more of Cho's crazy talk, come hell or high water.", register: 'Dramatic/Determined', confusables: ["Come rain or shine", "Through fire and ice"] },
+            { phrase: "Throw caution to the wind", meaning: "Act without caution or care, take a risk", example: "You should let go and throw caution to the wind.", register: 'Informal', confusables: ["Throw care to the air", "Throw sense away"] },
+            { phrase: "A lot on my plate", meaning: "Extremely busy and distracted with many responsibilities", example: "I know I haven't been much fun today, but I just have a lot on my plate right now.", register: 'Informal', confusables: ["A lot in my bowl", "Too many dishes"] },
+            { phrase: "Cool as a cucumber", meaning: "Having a calm and composed demeanor", example: "I don't know how you always stay relaxed. You look as cool as a cucumber!", register: 'Informal', confusables: ["Cold as ice", "Chill like a vegetable"] }
+        ];
+
+        let IDIOM_LIST = IDIOMS_INITIAL;
+
+        // --- GLOBAL STATE ---
+        const APP_STATE = {
+            idiomIndex: 0,
+            idiomTotal: IDIOM_LIST.length,
+            apiKey: '',
+            isListening: false,
+            isTutorSpeaking: false,
+            transcriptVisible: false,
+            isDarkMode: false,
+            tutorSpeaks: true,
+            tutorHistory: [{ role: 'tutor', text: "Welcome! Let's master some idioms. I'll start the first lesson now.", feedback: null }],
+            currentLesson: null, // Holds the current IDIOM object
+            lastFeedback: null, // Holds the last parsed JSON from Gemini
+            stt: null, // SpeechRecognition instance
+            geminiUrl: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+            retries: 0
+        };
+
+        // --- GEMINI PROMPT & SCHEMA (CRITICAL REQUIREMENT) ---
+        const GEMINI_SYSTEM_PROMPT = `You are a concise, friendly, and supportive ESL idiom coach for immigrants. Your goal is to provide actionable feedback based on the user's attempt to pronounce and use an American English idiom. 
+
+Current Idiom for evaluation: {idiom_phrase}
+Definition: {idiom_meaning}
+User's Spoken Attempt (Transcript): "{user_transcript}"
+STT Confidence Score: {stt_confidence}
+
+Your response MUST focus exclusively on the idiom:
+1. Provide a short, encouraging summary of the attempt.
+2. Give detailed linguistic tips (IPA, syllables, tricky phonemes) for the idiom phrase itself.
+3. Offer a practical usage tip on context/register.
+4. Suggest a single micro-exercise for follow-up.
+
+You MUST return only a single JSON object that strictly adheres to the provided schema. Never include any preceding or trailing text, explanations, or chain-of-thought outside of the JSON block.`;
+
+        const GEMINI_RESPONSE_SCHEMA = {
+          type: "OBJECT",
+          properties: {
+            "feedback_short": { "type": "STRING", "description": "A concise, encouraging summary of the user's attempt (max 35 words)." },
+            "pronunciation": {
+              "type": "OBJECT",
+              "properties": {
+                "ipa": { "type": "STRING", "description": "The full IPA notation for the idiom phrase (e.g., /ðə skaɪ ɪz ðə ˈlɪmɪt/)." },
+                "syllables": { "type": "STRING", "description": "The idiom phrase broken into syllables (e.g., 'the-sky-is-the-lim-it')." },
+                "tricky_phonemes": {
+                  "type": "ARRAY",
+                  "description": "A list of 3-5 phonemes in the phrase that are often difficult for non-native speakers (e.g., ['/r/', '/l/', '/θ/']).",
+                  "items": { "type": "STRING" }
+                }
+              }
+            },
+            "usage_tip": { "type": "STRING", "description": "1-2 sentences on contextual use or register (e.g., 'This is highly informal and best for friends.')." },
+            "micro_exercise": { "type": "STRING", "description": "One short follow-up task for the user (e.g., 'Use it in a new sentence.')." },
+            "confidence": { "type": "NUMBER", "description": "Your overall assessment of the user's attempt on a 0 (poor) to 1 (excellent) scale. Must be between 0 and 1." },
+            "cefr_band": { "type": "STRING", "description": "The assessed CEFR band based on the attempt's fluency and accuracy (must be A2, B1, B2, or C1)." }
+          }
+        };
+
+
+        // --- UTILITY FUNCTIONS ---
+
+        // Simple exponential backoff for retries
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+
+        // API Fetch Wrapper with Backoff/Error Handling
+        async function apiCall(prompt, systemPrompt, schema, isRetry = false) {
+            if (!APP_STATE.apiKey) {
+                updateStatus('ERROR: API Key is missing. Open Settings to enter one.', 'red');
+                return null;
+            }
+
+            const attempt = APP_STATE.retries;
+            const maxRetries = 3;
+
+            if (isRetry) {
+                const waitTime = Math.pow(2, attempt) * 1000;
+                updateStatus(`Retrying API call in ${waitTime / 1000}s... (Attempt ${attempt + 1}/${maxRetries})`, 'orange');
+                await delay(waitTime);
+            }
+
+            const fullApiUrl = `${APP_STATE.geminiUrl}?key=${APP_STATE.apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: schema
+                }
+            };
+
+            try {
+                const response = await fetch(fullApiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.status === 401) {
+                    updateStatus('API Key Invalid (401). Please check your key in Settings.', 'red');
+                    return null;
+                }
+                
+                // Handle rate limit (429) or transient server errors (5xx)
+                if (response.status === 429 || response.status >= 500) {
+                    if (APP_STATE.retries < maxRetries) {
+                        APP_STATE.retries++;
+                        return apiCall(prompt, systemPrompt, schema, true); // Recursive retry
+                    } else {
+                        updateStatus(`Failed after ${maxRetries} attempts. Server Error: ${response.status}`, 'red');
+                        return null;
+                    }
+                }
+
+                if (!response.ok) {
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                APP_STATE.retries = 0; // Reset retries on success
+
+                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!jsonText) {
+                    throw new Error("Gemini response was missing content.");
+                }
+
+                // The model sometimes wraps the JSON string in markdown
+                const cleanedJsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+                return JSON.parse(cleanedJsonText);
+
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                updateStatus(`Critical API Error: ${error.message}. See console for details.`, 'red');
+                return null;
+            }
+        }
+
+        function updateStatus(message, color = '#1e293b') {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.style.color = color;
+        }
+
+        // --- CORE APPLICATION LOGIC ---
+
+        function init() {
+            // Load settings and initialize UI state
+            loadSettings();
+
+            // Check if STT is available (only works in Chrome-based browsers/mobile)
+            if (!('webkitSpeechRecognition' in window)) {
+                updateStatus('Speech Recognition not supported in this browser. Use Chrome for full functionality.', 'red');
+                document.getElementById('mic-button').disabled = true;
+            } else {
+                setupSTT();
+            }
+
+            // Initial UI setup and lesson start
+            setupEventListeners();
+            startLesson(0); // Start with the first idiom
+            updateMicButton(false);
+            
+            // Check for API Key on load
+            if (APP_STATE.apiKey) {
+                 updateStatus(`API Key found. Ready to start lesson ${APP_STATE.idiomIndex + 1}.`, '#0d9488');
+            } else {
+                updateStatus('Enter your Gemini API Key in Settings to begin.', 'red');
+            }
+        }
+
+        function loadSettings() {
+            const key = localStorage.getItem('idiomMasterApiKey');
+            const darkMode = localStorage.getItem('idiomMasterDarkMode') === 'true';
+            const tutorSpeaks = localStorage.getItem('idiomMasterTutorSpeaks') !== 'false'; // Default to true
+
+            if (key) {
+                APP_STATE.apiKey = key;
+                document.getElementById('api-key-input').value = key;
+            }
+
+            APP_STATE.isDarkMode = darkMode;
+            document.getElementById('dark-mode-toggle').checked = darkMode;
+            document.body.classList.toggle('dark-mode', darkMode);
+
+            APP_STATE.tutorSpeaks = tutorSpeaks;
+            document.getElementById('tts-toggle').checked = tutorSpeaks;
+        }
+
+        function saveSettings() {
+            const newKey = document.getElementById('api-key-input').value.trim();
+            const isDarkMode = document.getElementById('dark-mode-toggle').checked;
+            const tutorSpeaks = document.getElementById('tts-toggle').checked;
+
+            if (newKey) {
+                APP_STATE.apiKey = newKey;
+                localStorage.setItem('idiomMasterApiKey', newKey);
+                updateStatus('Settings saved. API Key set.', '#0d9488');
+                document.getElementById('mic-button').disabled = false;
+            } else {
+                localStorage.removeItem('idiomMasterApiKey');
+                APP_STATE.apiKey = '';
+                updateStatus('API Key removed. Cannot proceed without a key.', 'red');
+                document.getElementById('mic-button').disabled = true;
+            }
+
+            APP_STATE.isDarkMode = isDarkMode;
+            localStorage.setItem('idiomMasterDarkMode', isDarkMode);
+            document.body.classList.toggle('dark-mode', isDarkMode);
+
+            APP_STATE.tutorSpeaks = tutorSpeaks;
+            localStorage.setItem('idiomMasterTutorSpeaks', tutorSpeaks);
+
+            closeModal('settings-modal');
+        }
+        
+        function csvToIdioms(csv) {
+            const lines = csv.trim().split('\n');
+            if (lines.length < 2) return null; // Need header and at least one idiom
+
+            const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z0-9]/g, ''));
+            const requiredHeaders = ['phrase', 'meaning', 'example', 'register'];
+
+            if (!requiredHeaders.every(rh => headers.includes(rh))) {
+                return null;
+            }
+
+            const newIdioms = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                if (values.length >= requiredHeaders.length) {
+                    const idiom = {};
+                    headers.forEach((header, index) => {
+                        idiom[header] = values[index].trim();
+                    });
+                    // Ensure optional fields are present or defaulted
+                    if (!idiom.confusables) idiom.confusables = '[]'; 
+                    
+                    // Simple hack to re-add missing fields if CSV is minimal
+                    idiom.phrase = idiom.phrase || '';
+                    idiom.meaning = idiom.meaning || '';
+                    idiom.example = idiom.example || '';
+                    idiom.register = idiom.register || 'general';
+                    idiom.confusables = idiom.confusables || '[]'; // Placeholder
+                    
+                    newIdioms.push(idiom);
+                }
+            }
+            return newIdioms;
+        }
+
+
+        function startLesson(index) {
+            APP_STATE.idiomIndex = index % IDIOM_LIST.length;
+            APP_STATE.currentLesson = IDIOM_LIST[APP_STATE.idiomIndex];
+            APP_STATE.lastFeedback = null; // Clear previous feedback
+
+            document.getElementById('current-idiom-phrase').textContent = APP_STATE.currentLesson.phrase;
+            document.getElementById('current-idiom-meaning').textContent = APP_STATE.currentLesson.meaning;
+            document.getElementById('current-idiom-example').textContent = APP_STATE.currentLesson.example;
+            document.getElementById('next-idiom-btn').disabled = true;
+
+            const initialText = `Hello! Today's idiom is **${APP_STATE.currentLesson.phrase}**. It means to ${APP_STATE.currentLesson.meaning}. Please say it in a full sentence.`;
+            
+            // Add tutor's instruction to history
+            APP_STATE.tutorHistory.push({ role: 'tutor', text: initialText, feedback: null });
+            
+            // Play initial prompt
+            if (APP_STATE.tutorSpeaks) textToSpeech(initialText);
+
+            updateStatus('Tap the mic and say the idiom in a full sentence.', '#0d9488');
+            drawCanvas();
+
+            // Enable mic if API key is present
+            document.getElementById('mic-button').disabled = !APP_STATE.apiKey;
+        }
+
+        function nextLesson() {
+            startLesson(APP_STATE.idiomIndex + 1);
+        }
+
+        // --- SPEECH RECOGNITION (STT) ---
+
+        function setupSTT() {
+            const Recognition = window.webkitSpeechRecognition;
+            APP_STATE.stt = new Recognition();
+            
+            // Set language based on settings (default US)
+            const lang = document.getElementById('accent-target-select')?.value || 'en-US';
+            APP_STATE.stt.lang = lang;
+            
+            APP_STATE.stt.interimResults = false;
+            APP_STATE.stt.maxAlternatives = 1;
+
+            APP_STATE.stt.onstart = () => {
+                APP_STATE.isListening = true;
+                updateMicButton(true);
+                updateStatus('Listening... say your sentence now.', '#ef4444');
+            };
+
+            APP_STATE.stt.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                const confidence = event.results[0][0].confidence;
+                
+                // User text is immediately shown in history and transcript box
+                APP_STATE.tutorHistory.push({ role: 'user', text: transcript, confidence: confidence });
+                document.getElementById('transcript-box').textContent = transcript;
+
+                handleSpeechResult(transcript, confidence);
+            };
+
+            APP_STATE.stt.onerror = (event) => {
+                console.error('STT Error:', event.error);
+                updateStatus(`STT Error: ${event.error}. Try again or check permissions.`, 'red');
+                updateMicButton(false);
+                APP_STATE.isListening = false;
+            };
+
+            APP_STATE.stt.onend = () => {
+                if (APP_STATE.isListening) {
+                    // Only update if it didn't end due to an error that needs red message
+                    updateStatus('Processing feedback...', 'gray');
+                }
+                APP_STATE.isListening = false;
+                updateMicButton(false);
+            };
+        }
+        
+        function updateMicButton(isListening) {
+            const micBtn = document.getElementById('mic-button');
+            if (isListening) {
+                micBtn.classList.add('listening');
+                micBtn.innerHTML = '<i class="fas fa-square"></i> Stop Listening';
+                micBtn.disabled = false;
+                document.getElementById('sample-attempt-btn').disabled = true;
+                document.getElementById('next-idiom-btn').disabled = true;
+            } else {
+                micBtn.classList.remove('listening');
+                micBtn.innerHTML = '<i class="fas fa-microphone"></i> Tap to Speak';
+                micBtn.disabled = !APP_STATE.apiKey;
+                document.getElementById('sample-attempt-btn').disabled = false;
+                document.getElementById('next-idiom-btn').disabled = APP_STATE.lastFeedback === null;
+            }
+        }
+
+        function handleMicClick() {
+            if (APP_STATE.isListening) {
+                APP_STATE.stt.stop();
+            } else {
+                // Ensure the STT instance is properly set up before starting
+                if (!APP_STATE.stt) setupSTT(); 
+                APP_STATE.stt.start();
+            }
+        }
+
+        // --- TEXT TO SPEECH (TTS) ---
+
+        function textToSpeech(text) {
+            if (!APP_STATE.tutorSpeaks || !('speechSynthesis' in window)) return;
+
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(text);
+            
+            // Optional: find a good voice (e.g., US English Female)
+            const voices = synth.getVoices();
+            const usVoice = voices.find(voice => voice.lang === 'en-US' && voice.name.includes('Google'));
+            if (usVoice) {
+                utterance.voice = usVoice;
+            }
+            
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+
+            utterance.onstart = () => { APP_STATE.isTutorSpeaking = true; };
+            utterance.onend = () => { APP_STATE.isTutorSpeaking = false; };
+            utterance.onerror = (event) => { console.error('TTS Error:', event.error); APP_STATE.isTutorSpeaking = false; };
+
+            synth.speak(utterance);
+        }
+
+        // --- GEMINI INTERACTION ---
+
+        async function handleSpeechResult(transcript, confidence) {
+            // Disable mic button while waiting for AI feedback
+            updateMicButton(false);
+            
+            // Call Gemini to get structured feedback
+            const feedback = await callGeminiTutor(transcript, confidence);
+            
+            if (feedback) {
+                APP_STATE.lastFeedback = feedback;
+                
+                // Update the last user entry with the feedback
+                APP_STATE.tutorHistory[APP_STATE.tutorHistory.length - 1].feedback = feedback;
+
+                // Tutor's response is a summary of the feedback
+                const tutorText = `That was a great attempt! ${feedback.feedback_short}. Your next task: ${feedback.micro_exercise}`;
+                
+                APP_STATE.tutorHistory.push({ role: 'tutor', text: tutorText, feedback: null });
+                if (APP_STATE.tutorSpeaks) textToSpeech(tutorText);
+                
+                updateStatus('Feedback received. Ready for the next lesson!', '#10b981');
+                document.getElementById('next-idiom-btn').disabled = false;
+            } else {
+                 // If call failed, keep mic button disabled but allow retry
+                 updateStatus('AI Tutor is unavailable. Please check your API Key or try again.', 'red');
+            }
+            // Re-enable mic button logic via updateMicButton(false) which is called at the end of onend
+            drawCanvas();
+        }
+
+        async function callGeminiTutor(transcript, confidence) {
+            const current = APP_STATE.currentLesson;
+            
+            let systemPrompt = GEMINI_SYSTEM_PROMPT.replace('{idiom_phrase}', current.phrase)
+                .replace('{idiom_meaning}', current.meaning)
+                .replace('{user_transcript}', transcript)
+                .replace('{stt_confidence}', confidence.toFixed(2));
+
+            // The instruction is the actual prompt
+            const userPrompt = `Evaluate the user's spoken attempt: "${transcript}" against the target idiom "${current.phrase}". Provide comprehensive feedback strictly in the required JSON format.`;
+
+            try {
+                const feedback = await apiCall(userPrompt, systemPrompt, GEMINI_RESPONSE_SCHEMA);
+                
+                // Basic structural validation
+                if (feedback && feedback.feedback_short && feedback.pronunciation && feedback.confidence !== undefined) {
+                    return feedback;
+                } else {
+                    throw new Error("Invalid or incomplete JSON structure returned by Gemini.");
+                }
+            } catch (error) {
+                console.error("Error processing Gemini feedback:", error);
+                return null;
+            }
+        }
+        
+        function handleSampleAttempt() {
+            if (!APP_STATE.apiKey) {
+                updateStatus('API Key is missing. Open Settings to enter one.', 'red');
+                return;
+            }
+            
+            const idiom = APP_STATE.currentLesson;
+            const mockTranscript = `I'm going to jump the gun and say ${idiom.phrase} every time.`;
+            const mockConfidence = 0.85; // High confidence for mock
+
+            APP_STATE.tutorHistory.push({ role: 'user', text: mockTranscript, confidence: mockConfidence });
+            document.getElementById('transcript-box').textContent = mockTranscript;
+            
+            updateStatus('Running sample attempt with mock data...', 'gray');
+
+            // Simulate the STT result handler
+            handleSpeechResult(mockTranscript, mockConfidence);
+        }
+
+        // --- CANVAS RENDERING ---
+
+        function drawCanvas() {
+            const canvas = document.getElementById('idiom-canvas');
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+            const dark = APP_STATE.isDarkMode;
+
+            // Clear canvas
+            ctx.fillStyle = dark ? '#4b5563' : '#e2e8f0';
+            ctx.fillRect(0, 0, W, H);
+
+            // --- 1. Draw Progress Ring (Top Left) ---
+            const progress = (APP_STATE.idiomIndex + 1) / APP_STATE.idiomTotal;
+            const centerX = 50;
+            const centerY = 50;
+            const radius = 35;
+            const endAngle = progress * 2 * Math.PI - 0.5 * Math.PI;
+
+            // Background arc
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.strokeStyle = dark ? '#6b7280' : '#cbd5e1';
+            ctx.lineWidth = 8;
+            ctx.stroke();
+
+            // Progress arc
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, -0.5 * Math.PI, endAngle);
+            ctx.strokeStyle = '#0d9488';
+            ctx.lineWidth = 8;
+            ctx.stroke();
+
+            // Progress text
+            ctx.fillStyle = dark ? '#f3f4f6' : '#1e293b';
+            ctx.font = 'bold 14px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${APP_STATE.idiomIndex + 1}/${APP_STATE.idiomTotal}`, centerX, centerY + 5);
+            ctx.font = '10px Inter';
+            ctx.fillText('Progress', centerX, centerY + 25);
+
+            // --- 2. Draw History/Conversation (Center) ---
+            const chatX = 10;
+            let chatY = H - 20;
+            ctx.font = '14px Inter';
+            ctx.textAlign = 'left';
+
+            // Limit history to last 5-6 entries for screen space
+            const historyToShow = APP_STATE.tutorHistory.slice(-5);
+            
+            historyToShow.reverse().forEach(entry => {
+                const isTutor = entry.role === 'tutor';
+                let text = isTutor ? entry.text : entry.text;
+                
+                // Truncate text if too long
+                if (text.length > 70) text = text.substring(0, 70) + '...';
+                
+                const bubbleColor = isTutor ? '#0d9488' : '#3b82f6';
+                const textColor = 'white';
+                const arrowOffset = 5;
+
+                // Draw Bubble
+                ctx.fillStyle = bubbleColor;
+                const textWidth = ctx.measureText(text).width + 30;
+                const bubbleHeight = 30;
+
+                let bubbleX = isTutor ? chatX : W - textWidth - chatX;
+                let bubbleY = chatY - bubbleHeight;
+
+                // Draw rounded rectangle
+                ctx.beginPath();
+                ctx.moveTo(bubbleX + 10, bubbleY);
+                ctx.lineTo(bubbleX + textWidth - 10, bubbleY);
+                ctx.arcTo(bubbleX + textWidth, bubbleY, bubbleX + textWidth, bubbleY + 10, 10);
+                ctx.lineTo(bubbleX + textWidth, bubbleY + bubbleHeight - 10);
+                ctx.arcTo(bubbleX + textWidth, bubbleY + bubbleHeight, bubbleX + textWidth - 10, bubbleY + bubbleHeight, 10);
+                
+                // Draw arrow/tail
+                if (isTutor) {
+                    // Left arrow
+                    ctx.lineTo(bubbleX + 15, bubbleY + bubbleHeight);
+                    ctx.lineTo(bubbleX + arrowOffset, bubbleY + bubbleHeight + 5);
+                    ctx.lineTo(bubbleX + arrowOffset, bubbleY + bubbleHeight - 10);
+                    ctx.lineTo(bubbleX + 10, bubbleY + bubbleHeight);
+                } else {
+                    // Right arrow
+                    ctx.lineTo(bubbleX + textWidth - 15, bubbleY + bubbleHeight);
+                    ctx.lineTo(bubbleX + textWidth - arrowOffset, bubbleY + bubbleHeight + 5);
+                    ctx.lineTo(bubbleX + textWidth - arrowOffset, bubbleY + bubbleHeight - 10);
+                    ctx.lineTo(bubbleX + textWidth - 10, bubbleY + bubbleHeight);
+                }
+
+                ctx.arcTo(bubbleX, bubbleY + bubbleHeight, bubbleX, bubbleY + bubbleHeight - 10, 10);
+                ctx.lineTo(bubbleX, bubbleY + 10);
+                ctx.arcTo(bubbleX, bubbleY, bubbleX + 10, bubbleY, 10);
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw Text
+                ctx.fillStyle = textColor;
+                ctx.textAlign = isTutor ? 'left' : 'right';
+                ctx.fillText(text, isTutor ? bubbleX + 15 : bubbleX + textWidth - 15, bubbleY + 20);
+
+                chatY = bubbleY - 15; // Move up for next bubble
+            });
+
+
+            // --- 3. Draw Feedback Panel (Right Side, only if feedback exists) ---
+            if (APP_STATE.lastFeedback) {
+                const feedback = APP_STATE.lastFeedback;
+                const panelX = W - 200;
+                const panelWidth = 180;
+                let panelY = 20;
+
+                ctx.fillStyle = dark ? '#6b7280' : '#ffffff';
+                ctx.fillRect(panelX, panelY, panelWidth, H - 40);
+                ctx.strokeStyle = dark ? '#9ca3af' : '#d1d5db';
+                ctx.strokeRect(panelX, panelY, panelWidth, H - 40);
+
+                ctx.textAlign = 'center';
+                ctx.fillStyle = dark ? '#f3f4f6' : '#1e293b';
+                ctx.font = 'bold 16px Inter';
+                ctx.fillText('AI LINGUISTIC TIPS', panelX + panelWidth / 2, panelY + 30);
+
+                panelY += 50;
+
+                // Confidence Meter (0-1)
+                const confScore = feedback.confidence || 0.5;
+                const meterLength = panelWidth - 40;
+                ctx.font = '12px Inter';
+                ctx.textAlign = 'left';
+                ctx.fillText('Fluency:', panelX + 20, panelY);
+                ctx.fillStyle = dark ? '#374151' : '#e5e7eb';
+                ctx.fillRect(panelX + 20, panelY + 5, meterLength, 10);
+                ctx.fillStyle = confScore > 0.8 ? '#10b981' : confScore > 0.5 ? '#f59e0b' : '#ef4444';
+                ctx.fillRect(panelX + 20, panelY + 5, meterLength * confScore, 10);
+                ctx.fillStyle = dark ? '#f3f4f6' : '#1e293b';
+                ctx.textAlign = 'right';
+                ctx.fillText(confScore.toFixed(2), panelX + panelWidth - 20, panelY);
+
+                panelY += 25;
+                ctx.textAlign = 'left';
+                
+                // CEFR Band
+                ctx.font = 'bold 12px Inter';
+                ctx.fillText('CEFR:', panelX + 20, panelY);
+                ctx.font = '14px Inter';
+                ctx.fillStyle = '#0d9488';
+                ctx.fillText(feedback.cefr_band || 'N/A', panelX + 60, panelY);
+                
+                panelY += 20;
+
+                // IPA and Syllables
+                ctx.fillStyle = dark ? '#f3f4f6' : '#1e293b';
+                ctx.font = 'bold 12px Inter';
+                ctx.fillText('IPA:', panelX + 20, panelY + 15);
+                ctx.font = 'italic 12px Inter';
+                ctx.fillText(feedback.pronunciation.ipa || 'N/A', panelX + 20, panelY + 30);
+                
+                panelY += 45;
+
+                ctx.font = 'bold 12px Inter';
+                ctx.fillText('Syllables:', panelX + 20, panelY + 15);
+                ctx.font = '12px Inter';
+                ctx.fillText(feedback.pronunciation.syllables || 'N/A', panelX + 20, panelY + 30);
+
+                panelY += 45;
+
+                // Tricky Phonemes (Heatmap/List)
+                ctx.font = 'bold 12px Inter';
+                ctx.fillText('Tricky Phonemes:', panelX + 20, panelY + 15);
+                
+                const phonemes = feedback.pronunciation.tricky_phonemes || [];
+                const maxPhonemes = 5;
+                const squareSize = 25;
+                const startX = panelX + 20;
+                
+                panelY += 30;
+
+                for (let i = 0; i < Math.min(phonemes.length, maxPhonemes); i++) {
+                    const phoneme = phonemes[i];
+                    const x = startX + i * (squareSize + 5);
+                    
+                    // Simple color coding: red for hard, orange for medium
+                    ctx.fillStyle = (i === 0 || i === 1) ? '#ef4444' : '#f59e0b';
+                    ctx.fillRect(x, panelY, squareSize, squareSize);
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 12px Inter';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(phoneme, x + squareSize / 2, panelY + squareSize / 2 + 4);
+                    
+                    ctx.textAlign = 'left';
+                }
+            }
+            
+            // Re-adjust canvas height if needed for responsiveness
+            canvas.style.height = `${H}px`;
+        }
+
+        // --- SETUP EVENT LISTENERS & MODAL HANDLERS ---
+        function setupEventListeners() {
+            document.getElementById('mic-button').addEventListener('click', handleMicClick);
+            document.getElementById('next-idiom-btn').addEventListener('click', nextLesson);
+            document.getElementById('sample-attempt-btn').addEventListener('click', handleSampleAttempt);
+            document.getElementById('settings-btn').addEventListener('click', () => openModal('settings-modal'));
+            
+            document.getElementById('captions-toggle').addEventListener('change', (e) => {
+                APP_STATE.transcriptVisible = e.target.checked;
+                document.getElementById('transcript-box').classList.toggle('visible', APP_STATE.transcriptVisible);
+            });
+            
+            document.getElementById('tts-toggle').addEventListener('change', (e) => {
+                APP_STATE.tutorSpeaks = e.target.checked;
+            });
+            
+            document.getElementById('csv-upload-area').addEventListener('click', () => {
+                document.getElementById('csv-file-input').click();
+            });
+            
+            document.getElementById('csv-file-input').addEventListener('change', handleCsvUpload);
+
+            // Close modal when clicking outside
+            window.addEventListener('click', (event) => {
+                const modal = document.getElementById('settings-modal');
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+        
+        function handleCsvUpload(event) {
+            const file = event.target.files[0];
+            const messageEl = document.getElementById('csv-import-message');
+            
+            if (!file) {
+                messageEl.textContent = "No file selected.";
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const csvContent = e.target.result;
+                const newIdioms = csvToIdioms(csvContent);
+
+                if (newIdioms && newIdioms.length > 0) {
+                    IDIOM_LIST = newIdioms;
+                    APP_STATE.idiomTotal = IDIOM_LIST.length;
+                    APP_STATE.idiomIndex = 0;
+                    messageEl.textContent = `Success! ${IDIOM_LIST.length} custom idioms loaded.`;
+                } else {
+                    messageEl.textContent = "Error: Invalid CSV format. Check for Phrase, Meaning, Example headers.";
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function openModal(id) {
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // Initial call to start the app
+        window.onload = init;
+        
+    </script>
+</body>
+</html>
